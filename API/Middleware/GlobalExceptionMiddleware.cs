@@ -1,17 +1,20 @@
-﻿using Application.Exceptions;
+using Application.Exceptions;
 using FluentValidation;
 using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace API.Middleware
 {
     public class GlobalExceptionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<GlobalExceptionMiddleware> _logger;
 
-        public GlobalExceptionMiddleware(RequestDelegate next)
+        public GlobalExceptionMiddleware(RequestDelegate next, ILogger<GlobalExceptionMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context)
@@ -26,7 +29,7 @@ namespace API.Middleware
             }
         }
 
-        private static async Task HandleExceptionAsync(
+        private async Task HandleExceptionAsync(
     HttpContext context,
     Exception exception)
         {
@@ -43,6 +46,23 @@ namespace API.Middleware
             };
 
             context.Response.StatusCode = statusCode;
+            
+            if (statusCode == (int)HttpStatusCode.InternalServerError)
+            {
+                _logger.LogError(exception, "An unexpected error occurred.");
+            }
+            else if (statusCode == (int)HttpStatusCode.Unauthorized || statusCode == (int)HttpStatusCode.Forbidden)
+            {
+                _logger.LogWarning("Authorization/Authentication error: {Message}", exception.Message);
+            }
+            else if (exception is ValidationException)
+            {
+                _logger.LogWarning("Validation failed: {Message}", exception.Message);
+            }
+            else
+            {
+                _logger.LogWarning(exception, "An expected error occurred: {Message}", exception.Message);
+            }
 
             object response;
 

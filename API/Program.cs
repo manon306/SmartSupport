@@ -25,6 +25,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
 using System.Text;
+using Serilog;
 
 namespace API
 {
@@ -33,6 +34,17 @@ namespace API
         public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            Log.Logger = new LoggerConfiguration()
+                .MinimumLevel.Information()
+                .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Warning)
+                .MinimumLevel.Override("System", Serilog.Events.LogEventLevel.Warning)
+                .Enrich.FromLogContext()
+                .WriteTo.Console()
+                .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information)
+                .CreateLogger();
+
+            builder.Host.UseSerilog();
 
             // Add services to the container.
             builder.Services.AddAutoMapper(cfg =>
@@ -154,6 +166,8 @@ namespace API
 
             builder.Services.AddHangfireServer();
             var app = builder.Build();
+            
+            app.UseSerilogRequestLogging();
 
             app.UseMiddleware<GlobalExceptionMiddleware>();
             app.UseHangfireDashboard("/hangfire");

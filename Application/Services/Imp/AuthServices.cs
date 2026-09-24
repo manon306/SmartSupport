@@ -1,20 +1,23 @@
-﻿using Application.DTOs;
+using Application.DTOs;
 using Application.interfaces;
 using Application.Services.Interface;
 using Domain.Constants;
 using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 
 namespace Application.Services.Imp
 {
-    public class AuthServices(IAuthRepo authRepo, IJwtService jwtService, UserManager<ApplicationUser> userManager) : IAuthService
+    public class AuthServices(IAuthRepo authRepo, IJwtService jwtService, UserManager<ApplicationUser> userManager, ILogger<AuthServices> logger) : IAuthService
     {
         private readonly IAuthRepo _authRepo = authRepo;
         private readonly IJwtService _jwtService = jwtService;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
+        private readonly ILogger<AuthServices> _logger = logger;
         public async Task<AuthResponseDto> LoginAsync(LoginDto dto)
         {
             var user = await _authRepo.LoginAsync(dto.Email, dto.Password);
+            _logger.LogInformation("User {UserId} logged in successfully.", user.Id);
             var roles = await _userManager.GetRolesAsync(user);
             var accessToken = _jwtService.GenerateToken(user.Id, user.Email!, roles);
 
@@ -48,6 +51,7 @@ namespace Application.Services.Imp
 
             if (result != true)
             {
+                _logger.LogWarning("User registration failed for {Email}.", dto.Email);
                 throw new Exception("User registration failed.");
             }
 
@@ -55,8 +59,11 @@ namespace Application.Services.Imp
 
             if (!roleResult.Succeeded)
             {
+                _logger.LogError("Failed to assign Employee role for user {UserId}.", user.Id);
                 throw new Exception("Failed to assign Employee role.");
             }
+            
+            _logger.LogInformation("User {UserId} registered successfully.", user.Id);
             var roles = await _userManager.GetRolesAsync(user);
             var accessToken = _jwtService.GenerateToken(user.Id, user.Email!, roles);
             var refreshToken = _jwtService.GenerateRefreshToken();

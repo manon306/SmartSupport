@@ -1,22 +1,25 @@
-﻿using Application.BackgroundJobs;
+using Application.BackgroundJobs;
 using Application.Services.Interface;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.ApplicationDBContext;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace API.BackgroundJobs
 {
     public class CriticalTicketJob(
         DBContext dbContext,
         UserManager<ApplicationUser> userManager,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        ILogger<CriticalTicketJob> logger)
         : ICriticalTicketJob
     {
         private readonly DBContext _dbContext = dbContext;
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly INotificationService _notificationService = notificationService;
+        private readonly ILogger<CriticalTicketJob> _logger = logger;
 
         public async Task NotifyAdminsAboutCriticalTicketsAsync()
         {
@@ -30,6 +33,8 @@ namespace API.BackgroundJobs
             {
                 return;
             }
+            
+            _logger.LogInformation("Found {Count} critical unresolved tickets. Triggering notifications.", criticalTickets.Count);
 
             var admins = await _userManager
                 .GetUsersInRoleAsync("Admin");

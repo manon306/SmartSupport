@@ -1,4 +1,4 @@
-﻿using Application.DTOs.Ticket;
+using Application.DTOs.Ticket;
 using Application.interfaces;
 using Application.Services.Interface;
 using AutoMapper;
@@ -6,16 +6,18 @@ using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace Application.Services.Imp
 {
-    public class TicketServices(ITicketRepository Repo, IMapper mapper,IHttpContextAccessor accessor, IUserRepository userRepo) : ITicketService
+    public class TicketServices(ITicketRepository Repo, IMapper mapper,IHttpContextAccessor accessor, IUserRepository userRepo, ILogger<TicketServices> logger) : ITicketService
     {
         private readonly ITicketRepository _Repo = Repo;
         private readonly IMapper _Mapper = mapper;
         private readonly IHttpContextAccessor _accessor = accessor;
         private readonly IUserRepository _UserRepo = userRepo;
+        private readonly ILogger<TicketServices> _logger = logger;
         public string? GetCurrentUserId()
         {
             return _accessor.HttpContext?.User
@@ -54,6 +56,7 @@ namespace Application.Services.Imp
             var userId = GetCurrentUserId() ?? throw new UnauthorizedAccessException("User is not authenticated.");
             ticket.CreatedById = userId;
             var result = await _Repo.CreateTicket(ticket);
+            _logger.LogInformation("Ticket {TicketId} created successfully by user {UserId}.", result.Id, userId);
             return _Mapper.Map<TicketResponseDto>(result);
 
         }
@@ -111,6 +114,7 @@ namespace Application.Services.Imp
                 ?? throw new KeyNotFoundException("Ticket not found.");
 
             await _Repo.DeleteTicket(ticket);
+            _logger.LogInformation("Ticket {TicketId} deleted successfully by admin {AdminId}.", id, GetCurrentUserId());
         }
         public async Task<TicketResponseDto> UpdateTicket(int id, UpdateTicketDto dto)
         {
@@ -142,6 +146,7 @@ namespace Application.Services.Imp
                 ticket.Priority = dto.Priority;
             }
             var result = await _Repo.UpdateTicket(ticket);
+            _logger.LogInformation("Ticket {TicketId} updated successfully by user {UserId}.", id, userId);
             return _Mapper.Map<TicketResponseDto>(result);
         }
         public async Task<TicketResponseDto?> ChangeStatus(int ticketId, TicketStatus status)
@@ -167,6 +172,7 @@ namespace Application.Services.Imp
             }
             
             var result = await _Repo.ChangeStatus(ticketId, status);
+            _logger.LogInformation("Ticket {TicketId} status changed to {Status} by user {UserId}.", ticketId, status, userId);
             return _Mapper.Map<TicketResponseDto>(result);
         }
         public async Task<TicketResponseDto?> AssignTicket(int ticketId, string agentId)
@@ -194,6 +200,7 @@ namespace Application.Services.Imp
                 throw new InvalidOperationException("The selected user is not an Agent.");
             }
             var result = await _Repo.AssignTicket(ticketId, agentId);
+            _logger.LogInformation("Ticket {TicketId} assigned to agent {AgentId} by admin {AdminId}.", ticketId, agentId, GetCurrentUserId());
             return _Mapper.Map<TicketResponseDto>(result);
         }
     }

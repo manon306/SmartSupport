@@ -2,12 +2,17 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { AppLayout } from '../layouts/AppLayout';
 
-// Placeholder Pages
-const Login = () => <div className="p-8"><h2>Login Page (Placeholder)</h2></div>;
-const Register = () => <div className="p-8"><h2>Register Page (Placeholder)</h2></div>;
-const EmployeeDashboard = () => <div className="p-8"><h2>Employee Dashboard (Placeholder)</h2></div>;
-const AgentDashboard = () => <div className="p-8"><h2>Agent Dashboard (Placeholder)</h2></div>;
-const AdminDashboard = () => <div className="p-8"><h2>Admin Dashboard (Placeholder)</h2></div>;
+import { Login } from '../pages/auth/Login';
+import { Register } from '../pages/auth/Register';
+import { EmployeeDashboard } from '../pages/employee/Dashboard';
+import { MyTickets } from '../pages/employee/MyTickets';
+import { CreateTicket } from '../pages/employee/CreateTicket';
+import { AgentDashboard } from '../pages/agent/Dashboard';
+import { AllTickets } from '../pages/agent/AllTickets';
+import { AdminDashboard } from '../pages/admin/Dashboard';
+import { AdminTickets } from '../pages/admin/AdminTickets';
+import { UserManagement } from '../pages/admin/UserManagement';
+import { TicketDetails } from '../pages/shared/TicketDetails';
 
 export const AppRoutes = () => {
   return (
@@ -24,19 +29,24 @@ export const AppRoutes = () => {
           {/* Employee Routes */}
           <Route element={<ProtectedRoute allowedRoles={['Employee']} />}>
             <Route path="/employee/dashboard" element={<EmployeeDashboard />} />
-            {/* Other employee routes will go here */}
+            <Route path="/employee/tickets" element={<MyTickets />} />
+            <Route path="/employee/tickets/new" element={<CreateTicket />} />
+            <Route path="/employee/tickets/:id" element={<TicketDetails />} />
           </Route>
 
           {/* Agent Routes */}
           <Route element={<ProtectedRoute allowedRoles={['Agent']} />}>
             <Route path="/agent/dashboard" element={<AgentDashboard />} />
-            {/* Other agent routes will go here */}
+            <Route path="/agent/tickets" element={<AllTickets />} />
+            <Route path="/agent/tickets/:id" element={<TicketDetails />} />
           </Route>
 
           {/* Admin Routes */}
           <Route element={<ProtectedRoute allowedRoles={['Admin']} />}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            {/* Other admin routes will go here */}
+            <Route path="/admin/tickets" element={<AdminTickets />} />
+            <Route path="/admin/tickets/:id" element={<TicketDetails />} />
+            <Route path="/admin/users" element={<UserManagement />} />
           </Route>
 
         </Route>

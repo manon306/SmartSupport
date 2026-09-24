@@ -1,15 +1,27 @@
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useState } from 'react';
-// import { useSignalR } from '../context/SignalRContext';
+import { useState, useRef, useEffect } from 'react';
+import { useSignalR } from '../context/SignalRContext';
 
 export const AppLayout = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   
-  // To be implemented: const { notifications, unreadCount } = useSignalR();
+  const { notifications, unreadCount, markAllAsRead, isConnected } = useSignalR();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsNotificationsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -97,21 +109,59 @@ export const AppLayout = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden relative">
         {/* Top Header */}
-        <header className="bg-white shadow-sm z-0">
+        <header className="bg-white shadow-sm z-0 relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
-              <h2 className="text-xl font-semibold text-gray-800">
-                {filteredNavItems.find(item => location.pathname.startsWith(item.path))?.name || 'Dashboard'}
+              <h2 className="text-xl font-semibold text-gray-800 flex items-center space-x-2">
+                <span>{filteredNavItems.find(item => location.pathname.startsWith(item.path))?.name || 'Dashboard'}</span>
+                {!isConnected && user?.role === 'Admin' && (
+                   <span title="SignalR Disconnected" className="flex h-3 w-3 relative">
+                     <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                   </span>
+                )}
               </h2>
+              
               <div className="flex items-center space-x-4">
-                {/* Notification Badge Placeholder */}
-                <div className="relative p-2 text-gray-400 hover:text-gray-500 cursor-pointer">
-                  <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
-                    3
-                  </span>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
+                {/* Notification Badge */}
+                <div className="relative" ref={dropdownRef}>
+                  <button 
+                    onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                    className="relative p-2 text-gray-400 hover:text-gray-500 cursor-pointer focus:outline-none"
+                  >
+                    {unreadCount > 0 && (
+                      <span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-600 rounded-full">
+                        {unreadCount}
+                      </span>
+                    )}
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                  </button>
+                  
+                  {isNotificationsOpen && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-80 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                      <div className="p-3 border-b flex justify-between items-center">
+                        <span className="font-semibold text-gray-700">Notifications</span>
+                        {unreadCount > 0 && (
+                          <button onClick={markAllAsRead} className="text-xs text-primary hover:underline">
+                            Mark all as read
+                          </button>
+                        )}
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <div className="p-4 text-sm text-gray-500 text-center">No notifications</div>
+                        ) : (
+                          notifications.map(notif => (
+                            <div key={notif.id} className={`p-4 border-b text-sm ${!notif.read ? 'bg-blue-50' : ''}`}>
+                              <p className="text-gray-800">{notif.message}</p>
+                              <p className="text-xs text-gray-500 mt-1">{new Date(notif.timestamp).toLocaleTimeString()}</p>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

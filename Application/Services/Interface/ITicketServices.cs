@@ -6,6 +6,9 @@ namespace Application.Services.Interface
 {
     public interface ITicketService
     {
+        string? GetCurrentUserId();
+        string? GetCurrentUserRole();
+        bool IsValidStatusTransition(TicketStatus currentStatus, TicketStatus newStatus);
         Task<TicketResponseDto> CreateTicket(CreateTicketDto Dto);
         Task<IEnumerable<TicketResponseDto>> GetTickets();
 

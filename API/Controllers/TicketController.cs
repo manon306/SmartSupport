@@ -1,6 +1,13 @@
-﻿using Application.DTOs.Ticket;
-using Application.Services.Interface;
+using Application.DTOs.Ticket;
+using Application.Features.Ticket.Command.AssignTicket;
+using Application.Features.Ticket.Command.ChangeStatus;
+using Application.Features.Ticket.Command.CreateTicket;
+using Application.Features.Ticket.Command.DeleteTicket;
+using Application.Features.Ticket.Command.UpdateTicket;
+using Application.Features.Ticket.Queries.GetTicketById;
+using Application.Features.Ticket.Queries.GetTickets;
 using Domain.Enums;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,9 +16,9 @@ namespace API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
-    public class TicketController(ITicketService ticketServices) : ControllerBase
+    public class TicketController(IMediator mediator) : ControllerBase
     {
-        private readonly ITicketService _ticketServices = ticketServices;
+        private readonly IMediator _mediator = mediator;
 
         /// <summary>
         /// Creates a new support ticket for the currently authenticated user.
@@ -28,7 +35,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> CreateTicket(CreateTicketDto dto)
         {
-            var result = await _ticketServices.CreateTicket(dto);
+            var result = await _mediator.Send(new CreateTicketCommand { Dto = dto });
 
             return Ok(result);
         }
@@ -46,7 +53,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> GetTickets()
         {
-            var result = await _ticketServices.GetTickets();
+            var result = await _mediator.Send(new GetTicketsQuery());
 
             return Ok(result);
         }
@@ -66,7 +73,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> GetTicketById(int id)
         {
-            var result = await _ticketServices.GetTicketById(id);
+            var result = await _mediator.Send(new GetTicketByIdQuery { Id = id});
 
             if (result == null)
             {
@@ -98,7 +105,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateTicket(int id, UpdateTicketDto dto)
         {
-            var result = await _ticketServices.UpdateTicket(id, dto);
+            var result = await _mediator.Send(new UpdateTicketCommand { Id = id, Dto = dto });
 
             return Ok(result);
         }
@@ -118,7 +125,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteTicket(int id)
         {
-            await _ticketServices.DeleteTicket(id);
+            await _mediator.Send(new DeleteTicketCommand { Id = id });
 
             return Ok(new
             {
@@ -145,7 +152,7 @@ namespace API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> AssignTicket(int ticketId, string agentId)
         {
-            var result = await _ticketServices.AssignTicket(ticketId, agentId);
+            var result = await _mediator.Send(new AssignTicketCommand { TicketId = ticketId, AgentId = agentId });
 
             if (result == null)
             {
@@ -179,7 +186,7 @@ namespace API.Controllers
             int ticketId,
             TicketStatus status)
         {
-            var result = await _ticketServices.ChangeStatus(ticketId, status);
+            var result = await _mediator.Send(new ChangeStatusCommand { TicketId = ticketId, Status = status });
 
             if (result == null)
             {
@@ -193,4 +200,3 @@ namespace API.Controllers
         }
     }
 }
-

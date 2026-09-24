@@ -16,17 +16,17 @@ namespace Application.Services.Imp
         private readonly IMapper _Mapper = mapper;
         private readonly IHttpContextAccessor _accessor = accessor;
         private readonly IUserRepository _UserRepo = userRepo;
-        private string? GetCurrentUserId()
+        public string? GetCurrentUserId()
         {
             return _accessor.HttpContext?.User
                 .FindFirst(ClaimTypes.NameIdentifier)?.Value;
         }
-        private string? GetCurrentUserRole()
+        public string? GetCurrentUserRole()
         {
             return _accessor.HttpContext?.User
                 .FindFirst(ClaimTypes.Role)?.Value;
         }
-        private bool IsValidStatusTransition(TicketStatus currentStatus,TicketStatus newStatus)
+        public bool IsValidStatusTransition(TicketStatus currentStatus,TicketStatus newStatus)
         {
             return currentStatus switch
             {

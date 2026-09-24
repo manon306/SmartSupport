@@ -1,3 +1,4 @@
+using Application.Features.Ticket.Queries.GetTicketById;
 using Application.interfaces;
 using Application.Mapping;
 using Application.Services.Imp;
@@ -29,6 +30,8 @@ namespace API
                 cfg.AddProfile<TicketProfile>();
             });
             builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMediatR(cfg =>
+                    cfg.RegisterServicesFromAssembly(typeof(GetTicketByIdHandler).Assembly));
             builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IAuthService, AuthServices>();

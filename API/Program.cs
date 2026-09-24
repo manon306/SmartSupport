@@ -161,7 +161,7 @@ namespace API
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5173")
+                    policy.WithOrigins("http://localhost:5173", "http://localhost:5174")
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();
@@ -251,4 +251,6 @@ namespace API
   "email": "Admin@example.com",
   "password": "Admin@123"
 }
+Menna@gmail.com
+Menna@123
  */

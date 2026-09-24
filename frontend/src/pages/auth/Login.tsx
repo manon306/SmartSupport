@@ -18,7 +18,34 @@ export const Login = () => {
 
     try {
       await login({ email, password });
-      navigate('/');
+    
+      const storedToken = localStorage.getItem('accessToken');
+    
+      if (!storedToken) {
+        throw new Error('No access token found.');
+      }
+    
+      const payload = JSON.parse(
+        atob(
+          storedToken
+            .split('.')[1]
+            .replace(/-/g, '+')
+            .replace(/_/g, '/')
+        )
+      );
+    
+      const roleClaim =
+        payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'];
+    
+      const role = Array.isArray(roleClaim) ? roleClaim[0] : roleClaim;
+    
+      const dashboardByRole: Record<string, string> = {
+        Admin: '/admin/dashboard',
+        Agent: '/agent/dashboard',
+        Employee: '/employee/dashboard',
+      };
+    
+      navigate(dashboardByRole[role] ?? '/login', { replace: true });
     } catch (err: any) {
       if (err.response?.data?.message) {
         setError(err.response.data.message);

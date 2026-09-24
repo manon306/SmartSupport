@@ -111,6 +111,15 @@ Structured logging is implemented via **Serilog**.
 | PUT | `/api/Ticket/{ticketId}/assign/{agentId}` | Required (Admin) | Assigns a ticket to a specific Agent |
 | PUT | `/api/Ticket/{ticketId}/status/{status}` | Required | Advances the status of a ticket |
 
+### Admin
+| Method | Route | Auth | Description |
+|--------|-------|------|-------------|
+| GET | `/api/Admin/dashboard` | Required (Admin) | Retrieves dashboard statistics (tickets and users) |
+| GET | `/api/Admin/users` | Required (Admin) | Retrieves all users and their roles |
+| GET | `/api/Admin/users/{userId}` | Required (Admin) | Retrieves a specific user by ID |
+| PUT | `/api/Admin/users/{userId}/role` | Required (Admin) | Changes a user's role |
+| GET | `/api/Admin/agents` | Required (Admin) | Retrieves all users in the Agent role |
+
 ## Database
 The project uses **Entity Framework Core** with **SQL Server**.
 - **Core Entities:** `Ticket`, `Comment`, `RefreshToken`.
@@ -124,6 +133,7 @@ SmartSupport/
 ├── Application/           # CQRS Features, DTOs, Mapping, Services, Validators
 ├── Domain/                # Entities, Enums, Constants
 ├── Infrastructure/        # DbContext, Repositories, EF Core Migrations
+├── frontend/              # React, Vite, Tailwind CSS SPA
 └── SmartSupport.sln
 ```
 
@@ -170,8 +180,42 @@ SmartSupport/
    - **Swagger UI:** Navigate to `https://localhost:<port>/swagger` to explore and test the API.
    - **Hangfire Dashboard:** Navigate to `https://localhost:<port>/hangfire`.
 
-## Frontend (Planned / In Progress)
-A frontend application to interact with this API is currently planned/in progress. It is not yet implemented.
+## Frontend SPA
 
-## Admin Dashboard (Planned / In Progress)
-A dedicated administrative dashboard for managing users, tracking metrics, and overseeing the ticket system is planned/in progress. It is not yet implemented.
+The repository includes a modern Single Page Application built to interface with the API.
+
+### Technology Stack
+- **React & TypeScript:** Strongly typed UI components.
+- **Vite:** Lightning-fast frontend tooling and bundling.
+- **Tailwind CSS:** Utility-first CSS framework for rapid styling.
+- **React Router:** Declarative routing and role-based protection guards.
+- **Axios:** API client configured with HTTP interceptors for automatic token refresh handling.
+- **SignalR:** Integration for real-time WebSocket notifications.
+
+### Features
+- **Role-based Dashboards:** Dynamic layouts modifying navigation based on the user's role.
+- **Employee View:** Manage personal tickets, create new requests.
+- **Agent View:** View unassigned/assigned tickets, manage ticket statuses.
+- **Admin Dashboard:** Access high-level statistics, manage all tickets globally, and control user roles.
+- **State Management:** Context API handling global authentication state transparently.
+
+### Running the Frontend
+1. **Navigate to the frontend directory:**
+   ```bash
+   cd frontend
+   ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+3. **Environment Setup:**
+   Ensure `frontend/.env` points to your running backend:
+   ```env
+   VITE_API_BASE_URL=https://localhost:7250/api
+   VITE_SIGNALR_HUB_URL=https://localhost:7250/hubs/notifications
+   ```
+4. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   The application will be accessible at `http://localhost:5173`.

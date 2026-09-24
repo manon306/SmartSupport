@@ -1,4 +1,5 @@
 using Application.DTOs.Ticket;
+using Application.Exceptions;
 using Application.interfaces;
 using Application.Services.Interface;
 using AutoMapper;
@@ -31,7 +32,7 @@ namespace Application.Features.Ticket.Command.UpdateTicket
             var role = _TicketService.GetCurrentUserRole();
             if (role == Roles.Employee && ticket.CreatedById != userId)
             {
-                throw new UnauthorizedAccessException(
+                throw new ForbiddenException(
                     "You are not allowed to update this ticket.");
             }
             ticket.UpdatedById = userId;

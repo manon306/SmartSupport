@@ -1,13 +1,23 @@
+using API.BackgroundJobs;
+using API.Hubs;
+using API.Middleware;
+using API.Services;
+using Application.BackgroundJobs;
+using Application.Behaviors;
 using Application.Features.Ticket.Queries.GetTicketById;
 using Application.interfaces;
 using Application.Mapping;
 using Application.Services.Imp;
 using Application.Services.Interface;
 using Application.Settings;
+using Application.Validators;
 using Domain.Constants;
 using Domain.Entities;
+using FluentValidation;
+using Hangfire;
 using Infrastructure.ApplicationDBContext;
 using Infrastructure.Repository;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -29,6 +39,11 @@ namespace API
             {
                 cfg.AddProfile<TicketProfile>();
             });
+            builder.Services.AddValidatorsFromAssemblyContaining<CreateTicketValidator>();
+
+            builder.Services.AddTransient(
+                typeof(IPipelineBehavior<,>),
+                typeof(ValidationBehavior<,>));
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMediatR(cfg =>
                     cfg.RegisterServicesFromAssembly(typeof(GetTicketByIdHandler).Assembly));
@@ -38,8 +53,11 @@ namespace API
             builder.Services.AddScoped<IAuthRepo, AuthRepo>();
             builder.Services.AddScoped<ITicketService, TicketServices>();
             builder.Services.AddScoped<ITicketRepository, TicketRepository>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddScoped<ICriticalTicketJob,CriticalTicketJob>();
             builder.Services.Configure<JwtSettings>(
                 builder.Configuration.GetSection("Jwt"));
+            builder.Services.AddSignalR();
             builder.Services.AddDbContext<DBContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("defaultConnectionString")
             ));
@@ -76,6 +94,20 @@ namespace API
                             ValidAudience = jwtSettings.Audience,
 
                             ValidateLifetime = true
+                        };
+                        options.Events = new JwtBearerEvents
+                        {
+                            OnMessageReceived = context =>
+                            {
+                                var accessToken = context.Request.Query["access_token"];
+                                var path = context.HttpContext.Request.Path;
+                                if (!string.IsNullOrEmpty(accessToken) &&
+                                    (path.StartsWithSegments("/hubs/notifications")))
+                                {
+                                    context.Token = accessToken;
+                                }
+                                return Task.CompletedTask;
+                            }
                         };
                     });
             builder.Services.AddEndpointsApiExplorer();
@@ -114,8 +146,17 @@ namespace API
             });
 
             builder.Services.AddControllers();
+            builder.Services.AddHangfire(config =>
+            {
+                config.UseSqlServerStorage(
+                    builder.Configuration.GetConnectionString("defaultConnectionString"));
+            });
 
+            builder.Services.AddHangfireServer();
             var app = builder.Build();
+
+            app.UseMiddleware<GlobalExceptionMiddleware>();
+            app.UseHangfireDashboard("/hangfire");
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider
@@ -147,12 +188,17 @@ namespace API
                 });
             }
 
+            RecurringJob.AddOrUpdate<ICriticalTicketJob>(
+                    "critical-ticket-notification",
+                    job => job.NotifyAdminsAboutCriticalTicketsAsync(),
+                    Cron.Daily(0));
             app.UseHttpsRedirection();
             app.UseAuthentication();
             app.UseAuthorization();
-
+            app.UseStaticFiles();
 
             app.MapControllers();
+            app.MapHub<NotificationHub>("/hubs/notifications");
 
             app.Run();
         }

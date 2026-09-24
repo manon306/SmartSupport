@@ -1,4 +1,5 @@
 using Application.DTOs.Ticket;
+using Application.Exceptions;
 using Application.interfaces;
 using Application.Services.Interface;
 using AutoMapper;
@@ -11,13 +12,15 @@ namespace Application.Features.Ticket.Command.AssignTicket
         ITicketRepository Repo,
         IMapper mapper,
         ITicketService TicketService,
-        IUserRepository userRepo)
+        IUserRepository userRepo,
+        INotificationService NotificationService)
         : IRequestHandler<AssignTicketCommand, TicketResponseDto?>
     {
         private readonly ITicketRepository _Repo = Repo;
         private readonly IMapper _Mapper = mapper;
         private readonly ITicketService _TicketService = TicketService;
         private readonly IUserRepository _UserRepo = userRepo;
+        private readonly INotificationService _NotificationService;
 
         public async Task<TicketResponseDto?> Handle(
             AssignTicketCommand request,
@@ -27,8 +30,8 @@ namespace Application.Features.Ticket.Command.AssignTicket
 
             if (role != Roles.Admin)
             {
-                throw new UnauthorizedAccessException(
-                    "Only Admins can assign tickets.");
+                throw new ForbiddenException(
+    "Only Admins can assign tickets.");
             }
             var ticket = await _Repo.GetTicketById(request.TicketId) ?? throw new KeyNotFoundException("Ticket not found.");
 
@@ -46,6 +49,12 @@ namespace Application.Features.Ticket.Command.AssignTicket
                 throw new InvalidOperationException("The selected user is not an Agent.");
             }
             var result = await _Repo.AssignTicket(request.TicketId, request.AgentId);
+            if (result != null)
+            {
+                await NotificationService.NotifyUserAsync(
+                    request.AgentId,
+                    $"Ticket #{result.Id} has been assigned to you.");
+            }
             return _Mapper.Map<TicketResponseDto>(result);
         }
     }

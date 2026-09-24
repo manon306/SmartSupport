@@ -1,4 +1,5 @@
 using Application.DTOs.Ticket;
+using Application.Exceptions;
 using Application.interfaces;
 using Application.Services.Interface;
 using AutoMapper;
@@ -33,12 +34,13 @@ namespace Application.Features.Ticket.Command.ChangeStatus
             var role = _TicketService.GetCurrentUserRole();
             if (role == Roles.Employee)
             {
-                throw new UnauthorizedAccessException(
+                throw new ForbiddenException(
                     "Employees cannot change ticket status.");
             }
+
             if (role == Roles.Agent && ticket.AssignedToId != userId)
             {
-                throw new UnauthorizedAccessException(
+                throw new ForbiddenException(
                     "An Agent can only change the status of a ticket assigned to them.");
             }
 

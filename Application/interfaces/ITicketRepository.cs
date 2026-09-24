@@ -1,4 +1,5 @@
-﻿using Domain.Entities;
+﻿using Application.DTOs.Ticket;
+using Domain.Entities;
 using Domain.Enums;
 
 namespace Application.interfaces
@@ -6,7 +7,10 @@ namespace Application.interfaces
     public interface ITicketRepository
     {
         Task<Ticket> CreateTicket(Ticket ticket);
-        Task<IEnumerable<Ticket>> GetTickets();
+        Task<(IEnumerable<Ticket> Items, int TotalCount)> GetTickets(
+    TicketFilterDto filter,
+    string? userId,
+    string role);
 
         Task<Ticket?> GetTicketById(int id);
 

@@ -10,7 +10,7 @@ namespace Application.Services.Interface
         string? GetCurrentUserRole();
         bool IsValidStatusTransition(TicketStatus currentStatus, TicketStatus newStatus);
         Task<TicketResponseDto> CreateTicket(CreateTicketDto Dto);
-        Task<IEnumerable<TicketResponseDto>> GetTickets();
+        //Task<IEnumerable<TicketResponseDto>> GetTickets();
 
         Task<TicketResponseDto?> GetTicketById(int id);
 

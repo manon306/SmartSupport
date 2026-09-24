@@ -51,9 +51,10 @@ namespace API.Controllers
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<IActionResult> GetTickets()
+        public async Task<IActionResult> GetTickets([FromQuery] TicketFilterDto filter)
         {
-            var result = await _mediator.Send(new GetTicketsQuery());
+            var result = await _mediator.Send(
+                new GetTicketsQuery(filter));
 
             return Ok(result);
         }

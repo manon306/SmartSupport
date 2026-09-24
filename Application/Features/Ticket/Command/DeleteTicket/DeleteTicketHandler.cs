@@ -1,3 +1,4 @@
+using Application.Exceptions;
 using Application.interfaces;
 using Application.Services.Interface;
 using Domain.Constants;
@@ -21,8 +22,8 @@ namespace Application.Features.Ticket.Command.DeleteTicket
 
             if (role != Roles.Admin)
             {
-                throw new UnauthorizedAccessException(
-                    "Only Admins can delete tickets.");
+                throw new ForbiddenException(
+                         "Only Admins can delete tickets.");
             }
 
             var ticket = await _Repo.GetTicketById(request.Id)

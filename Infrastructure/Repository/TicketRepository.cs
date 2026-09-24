@@ -1,4 +1,6 @@
-﻿using Application.interfaces;
+﻿using Application.DTOs.Ticket;
+using Application.interfaces;
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Infrastructure.ApplicationDBContext;
@@ -17,9 +19,47 @@ namespace Infrastructure.Repository
             return ticket;
 
         }
-        public async Task<IEnumerable<Ticket>> GetTickets()
+        public async Task<(IEnumerable<Ticket> Items, int TotalCount)> GetTickets(TicketFilterDto filter,string? userId,string role)
         {
-            return await _DB.Tickets.ToListAsync();
+            var query = _DB.Tickets.AsQueryable();
+
+            if (role == Roles.Employee)
+            {
+                query = query.Where(t => t.CreatedById == userId);
+            }
+
+            if (filter.Status.HasValue)
+            {
+                query = query.Where(t => t.Status == filter.Status.Value);
+            }
+
+            if (filter.Priority.HasValue)
+            {
+                query = query.Where(t => t.Priority == filter.Priority.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.Search))
+            {
+                query = query.Where(t =>
+                    t.Title.Contains(filter.Search) ||
+                    t.Description.Contains(filter.Search));
+            }
+
+            if (!string.IsNullOrWhiteSpace(filter.AssignedTo))
+            {
+                query = query.Where(t =>
+                    t.AssignedToId == filter.AssignedTo);
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip((filter.Page - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            return (items, totalCount);
         }
         public async Task<Ticket?> GetTicketById(int id)
         {

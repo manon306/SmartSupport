@@ -78,25 +78,25 @@ namespace Application.Services.Imp
             return _Mapper.Map<TicketResponseDto>(ticket);
         }
 
-        public async Task<IEnumerable<TicketResponseDto>> GetTickets()
-        {
-            var userId = GetCurrentUserId();
-            var role = GetCurrentUserRole();
+        //public async Task<IEnumerable<TicketResponseDto>> GetTickets()
+        //{
+        //    var userId = GetCurrentUserId();
+        //    var role = GetCurrentUserRole();
 
-            if (userId == null)
-            {
-                throw new UnauthorizedAccessException("User is not authenticated.");
-            }
+        //    if (userId == null)
+        //    {
+        //        throw new UnauthorizedAccessException("User is not authenticated.");
+        //    }
 
-            var tickets = await _Repo.GetTickets();
+        //    var tickets = await _Repo.GetTickets();
 
-            if (role == Roles.Employee)
-            {
-                tickets = tickets.Where(t => t.CreatedById == userId);
-            }
+        //    if (role == Roles.Employee)
+        //    {
+        //        tickets = tickets.Where(t => t.CreatedById == userId);
+        //    }
 
-            return _Mapper.Map<IEnumerable<TicketResponseDto>>(tickets);
-        }
+        //    return _Mapper.Map<IEnumerable<TicketResponseDto>>(tickets);
+        //}
         public async Task DeleteTicket(int id)
         {
             var role = GetCurrentUserRole();

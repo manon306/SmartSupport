@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SignalR Test</title>
+</head>
+<body>
+
+    <h2>SignalR Notification Test</h2>
+
+    <div>
+        <label for="token">JWT Token (Admin User):</label><br/>
+        <textarea id="token" rows="4" cols="50"></textarea><br/>
+        <button id="connectBtn">Connect</button>
+    </div>
+
+    <div id="messages"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@microsoft/signalr@latest/dist/browser/signalr.min.js"></script>
+
+    <script>
+    document.getElementById("connectBtn").addEventListener("click", () => {
+        const token = document.getElementById("token").value;
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/hubs/notifications", {
+                accessTokenFactory: () => token
+            })
+            .withAutomaticReconnect()
+            .build();
+
+        connection.on("ReceiveNotification", function (message) {
+            const div = document.getElementById("messages");
+            div.innerHTML += `<p>${message}</p>`;
+        });
+
+        connection.start()
+            .then(() => console.log("SignalR Connected with Token"))
+            .catch(err => console.error(err));
+    });
+    </script>
+
+</body>
+</html>

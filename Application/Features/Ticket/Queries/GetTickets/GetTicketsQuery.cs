@@ -3,7 +3,6 @@ using MediatR;
 
 namespace Application.Features.Ticket.Queries.GetTickets
 {
-    public class GetTicketsQuery : IRequest<IEnumerable<TicketResponseDto>>
-    {
-    }
+    public record GetTicketsQuery(TicketFilterDto Filter)
+        : IRequest<PagedResultDto<TicketResponseDto>>;
 }

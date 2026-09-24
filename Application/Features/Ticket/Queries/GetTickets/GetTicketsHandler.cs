@@ -2,7 +2,6 @@ using Application.DTOs.Ticket;
 using Application.interfaces;
 using Application.Services.Interface;
 using AutoMapper;
-using Domain.Constants;
 using MediatR;
 
 namespace Application.Features.Ticket.Queries.GetTickets
@@ -11,13 +10,13 @@ namespace Application.Features.Ticket.Queries.GetTickets
         ITicketRepository Repo,
         IMapper mapper,
         ITicketService TicketService)
-        : IRequestHandler<GetTicketsQuery, IEnumerable<TicketResponseDto>>
+        : IRequestHandler<GetTicketsQuery, PagedResultDto<TicketResponseDto>>
     {
         private readonly ITicketRepository _Repo = Repo;
         private readonly IMapper _Mapper = mapper;
         private readonly ITicketService _TicketService = TicketService;
 
-        public async Task<IEnumerable<TicketResponseDto>> Handle(
+        public async Task<PagedResultDto<TicketResponseDto>> Handle(
             GetTicketsQuery request,
             CancellationToken cancellationToken)
         {
@@ -26,17 +25,46 @@ namespace Application.Features.Ticket.Queries.GetTickets
 
             if (userId == null)
             {
-                throw new UnauthorizedAccessException("User is not authenticated.");
+                throw new UnauthorizedAccessException(
+                    "User is not authenticated.");
             }
 
-            var tickets = await _Repo.GetTickets();
+            var filter = request.Filter;
 
-            if (role == Roles.Employee)
+            if (filter.Page < 1)
             {
-                tickets = tickets.Where(t => t.CreatedById == userId);
+                filter.Page = 1;
             }
 
-            return _Mapper.Map<IEnumerable<TicketResponseDto>>(tickets);
+            if (filter.PageSize < 1)
+            {
+                filter.PageSize = 10;
+            }
+
+            if (filter.PageSize > 100)
+            {
+                filter.PageSize = 100;
+            }
+
+            var result = await _Repo.GetTickets(
+                filter,
+                userId,
+                role);
+
+            var items = _Mapper.Map<IEnumerable<TicketResponseDto>>(
+                result.Items);
+
+            var totalPages = (int)Math.Ceiling(
+                result.TotalCount / (double)filter.PageSize);
+
+            return new PagedResultDto<TicketResponseDto>
+            {
+                Items = items,
+                Page = filter.Page,
+                PageSize = filter.PageSize,
+                TotalCount = result.TotalCount,
+                TotalPages = totalPages
+            };
         }
     }
 }

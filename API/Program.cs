@@ -3,6 +3,7 @@ using Domain.Entities;
 using Infrastructure.ApplicationDBContext;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -20,10 +21,13 @@ namespace API
 
             builder.Services.Configure<JwtSettings>(
                 builder.Configuration.GetSection("Jwt"));
-
+            builder.Services.AddDbContext<DBContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("defaultConnectionString")
+            ));
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<DBContext>()
                 .AddDefaultTokenProviders();
+
             var jwtSettings = builder.Configuration
                             .GetSection("Jwt")
                             .Get<JwtSettings>()

@@ -157,6 +157,17 @@ namespace API
     });
             });
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
+
             builder.Services.AddControllers();
             builder.Services.AddHangfire(config =>
             {
@@ -207,6 +218,7 @@ namespace API
                     job => job.NotifyAdminsAboutCriticalTicketsAsync(),
                     Cron.Daily(0));
             app.UseHttpsRedirection();
+            app.UseCors("AllowFrontend");
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseStaticFiles();

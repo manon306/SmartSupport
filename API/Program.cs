@@ -1,4 +1,5 @@
 using Application.interfaces;
+using Application.Mapping;
 using Application.Services.Imp;
 using Application.Services.Interface;
 using Application.Settings;
@@ -23,9 +24,17 @@ namespace API
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
+            builder.Services.AddAutoMapper(cfg =>
+            {
+                cfg.AddProfile<TicketProfile>();
+            });
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddScoped<IUserRepository, UserRepository>();
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IAuthService, AuthServices>();
             builder.Services.AddScoped<IAuthRepo, AuthRepo>();
+            builder.Services.AddScoped<ITicketService, TicketServices>();
+            builder.Services.AddScoped<ITicketRepository, TicketRepository>();
             builder.Services.Configure<JwtSettings>(
                 builder.Configuration.GetSection("Jwt"));
             builder.Services.AddDbContext<DBContext>(options =>
@@ -146,3 +155,25 @@ namespace API
         }
     }
 }
+
+/*
+ * {
+  "email": "Menna@example.com",
+  "password": "Menna@123"
+    }
+{
+  "fullName": "Agent",
+  "email": "agent@example.com",
+  "password": "Agent@123"
+}
+{
+  "fullName": "Agent2",
+  "email": "agent2@example.com",
+  "password": "Agent2@123"
+}
+{
+  "fullName": "Admin",
+  "email": "Admin@example.com",
+  "password": "Admin@123"
+}
+ */

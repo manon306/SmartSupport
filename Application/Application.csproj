@@ -10,6 +10,7 @@
     <ProjectReference Include="..\Domain\Domain.csproj" />
   </ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="AutoMapper" Version="16.2.0" />
 		<PackageReference Include="MediatR" Version="14.2.0" />
 	</ItemGroup>
 

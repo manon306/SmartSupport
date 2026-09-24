@@ -1,13 +1,7 @@
 ﻿using Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Domain.Entities
+namespace Application.DTOs.Ticket
 {
-    public class Ticket
+    public class TicketResponseDto
     {
         public int Id { get; set; }
         public string Title { get; set; }
@@ -17,12 +11,8 @@ namespace Domain.Entities
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        public string CreatedById {  get; set; }
-        public ApplicationUser CreatedBy { get; set; }
+        public string CreatedById { get; set; }
         public string? UpdatedById { get; set; }
-        public ApplicationUser? UpdatedBy { get; set; }
         public string? AssignedToId { get; set; }
-        public ApplicationUser? AssignedTo { get; set; }
-
     }
 }

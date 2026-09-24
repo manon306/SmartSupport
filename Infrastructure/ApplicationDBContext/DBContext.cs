@@ -31,6 +31,12 @@ namespace Infrastructure.ApplicationDBContext
                 .HasForeignKey(t => t.UpdatedById)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Ticket -> AssignedTo
+            builder.Entity<Ticket>()
+                .HasOne(t => t.AssignedTo)
+                .WithMany()
+                .HasForeignKey(t => t.AssignedToId)
+                .OnDelete(DeleteBehavior.Restrict);
             // Comment -> Ticket
             builder.Entity<Comment>()
                 .HasOne(c => c.Ticket)

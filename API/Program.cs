@@ -1,6 +1,11 @@
+using Application.interfaces;
+using Application.Services.Imp;
+using Application.Services.Interface;
 using Application.Settings;
+using Domain.Constants;
 using Domain.Entities;
 using Infrastructure.ApplicationDBContext;
+using Infrastructure.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -11,14 +16,16 @@ using System.Text;
 
 namespace API
 {
-    public class Program
+    public  class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
-
+            builder.Services.AddScoped<IJwtService, JwtService>();
+            builder.Services.AddScoped<IAuthService, AuthServices>();
+            builder.Services.AddScoped<IAuthRepo, AuthRepo>();
             builder.Services.Configure<JwtSettings>(
                 builder.Configuration.GetSection("Jwt"));
             builder.Services.AddDbContext<DBContext>(options =>
@@ -97,6 +104,26 @@ namespace API
             builder.Services.AddControllers();
 
             var app = builder.Build();
+            using (var scope = app.Services.CreateScope())
+            {
+                var roleManager = scope.ServiceProvider
+                    .GetRequiredService<RoleManager<IdentityRole>>();
+
+                var roles = new[]
+                {
+                    Roles.Employee,
+                    Roles.Agent,
+                    Roles.Admin
+                };
+
+                foreach (var role in roles)
+                {
+                    if (!await roleManager.RoleExistsAsync(role))
+                    {
+                        await roleManager.CreateAsync(new IdentityRole(role));
+                    }
+                }
+            }
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -109,7 +136,7 @@ namespace API
             }
 
             app.UseHttpsRedirection();
-
+            app.UseAuthentication();
             app.UseAuthorization();
 
 
